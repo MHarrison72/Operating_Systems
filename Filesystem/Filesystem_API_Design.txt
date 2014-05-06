@@ -1,0 +1,183 @@
+//Author: Michael Harrison
+//Filesystem & API Design
+
+disk space: 
+	array of characters (at least 2MB or 2,097,152 bytes)
+
+need to write to file:
+	This number will be the maximum amount of files, of all types (including directories, special files, links etc.) that can exist at the 		same time on the partition.
+		chosen from when items created
+
+struct suberblock:
+	name of filesystem
+	number of data blocks 
+	count of max # of files
+	pointer to free list of blocks
+	size of struct file
+
+
+struct physical_directory: //organizes blocks allocated to each file/folder
+	list of direct blocks
+	indirect list of blocks
+	doublely indirect list of blocks
+
+
+struct logical_directory: 
+	name (at least 8 characters)
+	size (struct size + size of struct file + file(1)->size....file(n)->size)
+	location
+	access rights
+	alphabetical list of contents (folders then files)
+		struct A_dir....struct Z_dir, struct A_file.....struct Z_file
+	struct *parent_directory
+
+
+struct file:
+	name	(at least 8 characters)
+	extension (3 character)
+	type (regular, directory...)
+	size (16384 bytes or 16kB)
+	protection (r/w/e)
+	last access date
+	modified date/time stamp
+	actual address/ struct physical_directory
+
+//Flag Definitions 
+#define FILE 		0x00 //0000 0000 
+#define DIRECTORY	0x01 //0000 0001
+#define READ		0x02 //0000 0010
+#define WRITE		0x04 //0000 0100
+#define EXECUTE 	0x08 //0000 1000
+#define			0x10 //0001 0000
+#define			0x20 //0010 0000
+#define			0x40 //0100 0000     
+#define IN_USE		0x80 //1000 0000
+
+typedef struct inode{
+	unsigned long node_num; //inode number
+	unsigned int uid, gid;  //user id and group id for permission
+	char name[32];		//name of file w/ max 32 characters
+	char ext[3];		//file extension 3 characters
+	unsigned long size;	//size of file
+	char flags; 		//Flags described above
+	creation date
+	modified date
+	struct *physical_directory; 
+} inode;
+	
+#define NUM_DIRECT_BLOCKS 32	
+typedef struct physical_directory{
+	//block size = 512 bytes
+	block direct[NUM_DIRECT_BLOCKS];
+} physical_directory;
+
+typedef struct block{
+	char *block;
+} block;
+
+block allocation table
+	array of char size (disk size/block size)
+
+
+open-file table
+	array of structs
+		struct open_file:
+			file pointer
+			file-open count
+			location
+			access rights
+
+
+/	//http://www.tldp.org/LDP/intro-linux/html/sect_03_01.html
+	/bin		//Common programs, shared by the system, the system administrator and the users.
+	/boot		/*The startup files and the kernel, vmlinuz. In some recent distributions also grub data. Grub is the GRand Unified 				  Boot loader and is an attempt to get rid of the many different boot-loaders we know today.
+			*/
+	/dev		//Contains references to all the CPU peripheral hardware, which are represented as files with special properties.
+	/etc		/*Most important system configuration files are in /etc, this directory contains data similar to those in the Control 				  Panel in Windows
+			*/
+	/home		//Home directories of the common users.
+		/user
+			/home
+				/Documents
+	/initrd		//(on some distributions) Information for booting. Do not remove!
+	/lib		//Library files, includes files for all kinds of programs needed by the system and the users.
+	/lost+found	//Every partition has a lost+found in its upper directory. Files that were saved during failures are here.
+	/misc		//For miscellaneous purposes.
+	/mnt		//Standard mount point for external file systems, e.g. a CD-ROM or a digital camera.
+	/net		//Standard mount point for entire remote file systems
+	/opt		//Typically contains extra and third party software.
+	/proc		/*A virtual file system containing information about system resources. More information about the meaning of the files 				  in proc is obtained by entering the command man proc in a terminal window. The file proc.txt discusses the virtual 				  file system in detail.
+			*/
+	/root		/*The administrative user's home directory. Mind the difference between /, the root directory and /root, the home 				  directory of the root user.
+			*/
+	/sbin		//Programs for use by the system and the system administrator.
+	/tmp		//Temporary space for use by the system, cleaned upon reboot, so don't use this for saving any work!
+	/usr		//Programs, libraries, documentation etc. for all user-related programs.
+	/var		/*Storage for all variable files and temporary files created by users, such as log files, the mail queue, the print 				  spooler area, space for temporary storage of files downloaded from the Internet, or to keep an image of a CD before 				  burning it.
+			*/
+
+
+//API
+
+function: create
+	check for free inode
+	check for open block
+	fill in data values
+	write inode to disk
+
+function: open
+	check open_file table
+		check access rights
+		increment count
+		open file pointer
+	OR
+	locate file
+		create struct open_file
+		fill in data values
+
+
+function: delete
+	if directory
+		prompt to delete contents
+	return blocks to free blocks table
+	return struct to pool
+
+
+function: close
+	decrement count in open_file table
+	if 0
+		remove from table
+	else
+
+
+function: read
+	locate file
+	check access rights
+	locate block(s) to read from
+	read data
+	modify access date
+
+function: write
+	locate file
+	check access rights
+	locate area to write to
+	write data
+	modify access date
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

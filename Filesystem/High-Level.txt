@@ -1,0 +1,181 @@
+//Author: Michael Harrison
+//Lab 4: High Level Algorithim
+
+struct open_file
+	file name
+	directory number
+	inode number
+	count
+	access_rights
+
+
+
+struct block:
+	block number on disk
+
+
+struct fBlock:
+	previous free block
+	next free block
+
+
+
+struct address_space:
+	list of direct blocks
+	indirect list of blocks
+	double_indirect list of blocks
+
+
+/*
+.(current directory)
+..(parent directory)
+*/
+struct directory{
+	inode number
+	file name
+
+struct inode:
+	inode number
+	user id and group id for permission
+	size of file in bytes
+	Flags described above
+	creation date
+	modified date
+	physical mapping 
+	parent directory info
+
+
+struct superblock:
+	name of filesystem
+	size of blocks 
+	size of inode
+	max file size in bytes
+	number of free blocks
+	number of used blocks
+	Flags described above
+	first free block
+
+
+//API variables
+FILE *disk;
+superblock sb;
+inode_bmap[BLOCK_SIZE];
+inode pool[NUM_INODES];
+
+dir_table[NUM_INODES][NUM_INODES];
+/* ^Looks like this ^
+
+
+	0			1		3		4		5
+name	i_num		name	i_num					name	i_num
+.	0		.	1					.	5
+..	NULL		..	0					..	1
+home	1		file	2					file2	3
+			dir	5
+
+*/
+current_dir;
+open_file_table[NUM_INODES];
+
+
+//API Functions
+void next_free(void); //advance superblock pointer to next free block
+	increment number of used blocks in superblock
+	decrement number of free blocks in superblock
+	seek to first free block number from superblock
+	read in data to determine next free block
+	store number of next free block in superblock
+ 
+void create_fs(char *name);
+	create an open file 
+	extend to desired size
+	initalize superblock
+	initalize root directory inode
+	write superblock to disk
+	write inode bit map to disk
+	write inode pool to disk
+	write root directory info to disk
+	write  free block info to disk
+	
+void mount_fs(char *name);
+	read superblock from disk
+	read inode bit map from disk
+	read inode pull from disk
+	fill in directory table 
+		if inode_pool[i] is directory
+		then go to data block and read directory entries
+	create entry in open file table for root directory
+
+void sync_fs(void);
+	if superblock is dirty
+		write to disk
+	write inode bit map to disk
+	if inode_pool[i] is dirty
+		write to disk
+	if inode_pool[i] is directory
+		write directory entries from dir_table to disk
+	close filesystem
+
+void create(char *filename, char type);
+	find free inode by using inode bit map
+	check for a free block
+		if no free block exit
+	mark used inode in bit map
+	fill in inode data values
+	set superblock pointer to next free block
+	create entry in current directory
+	if type is directory
+		create new directory in table
+
+void write(char *filename, char *message);
+	determine number of blocks needed
+	if greater than 1
+		allocate more blocks to inode
+	check access rights
+	break message into 512 byte chunks
+	write message to disk
+	update modified data, dirty bit, and size
+	update inode pool
+
+void read(char *filename);
+	locate file
+	check access rights
+	determine number of blocks to read
+	read data from disk
+	print data to screen
+
+void destroy(char *filename);
+	locate file
+	check access rights
+	determine number of blocks used
+	deallocate blocks from inode
+		place blocks at beginning of free block list
+	free spot in inode bit map
+	clear inode in pool and mark as dirty
+	clear directory entry
+ 
+void open(char *filename);
+	check open file table 
+	if exists increment count
+	else create entry and store in open_file table
+
+void close(char *filename);
+	check open file table
+	if exists and count > 1
+		decrement count
+	else remove entry from table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
